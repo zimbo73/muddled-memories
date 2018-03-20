@@ -21,7 +21,7 @@ export class Beer extends React.Component<any, any> {
     public componentDidMount() {
         this.initialiseWindowDimensions();
         window.addEventListener('resize', this.startAnimation);
-        this.startAnimation
+        this.startAnimation();
     }
 
     public componentWillUnmount() {
@@ -49,8 +49,8 @@ export class Beer extends React.Component<any, any> {
                 });
             }
             else {
-                this.raf = null;
-                return;
+                //this.raf = null;
+                //return;
             }
         }
         this.raf = window.requestAnimationFrame(this.animate);
