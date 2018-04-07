@@ -1,4 +1,5 @@
 import * as React from 'react';
+import * as ReactDOM from 'react-dom';
 import { RouteComponentProps } from 'react-router';
 
 export class Beer extends React.Component<any, any> {
@@ -7,6 +8,7 @@ export class Beer extends React.Component<any, any> {
         super();
         this.state = {
             height: window.innerHeight,
+            width: window.innerWidth
         };
         this.startAnimation = this.startAnimation.bind(this);
         this.animate = this.animate.bind(this);
@@ -14,8 +16,10 @@ export class Beer extends React.Component<any, any> {
     }
 
     raf: number | null;
+    noChangeCount: number;
 
     public componentWillMount() {
+        this.noChangeCount = 0;
     }
 
     public componentDidMount() {
@@ -32,25 +36,44 @@ export class Beer extends React.Component<any, any> {
         }
     }
 
+    private getMaxWidth(parent: HTMLDivElement) {
+        var maxWidth = 0;
+        for (var i = 0; i < parent.children.length; i++) {
+            var child = parent.children[i],
+                rect = child.getBoundingClientRect();
+            if (rect.width > maxWidth) {
+                maxWidth = rect.width;
+            }
+        }
+        return maxWidth;
+    }
+
     private animate() {
         if (this.componentRef !== null) {
-            var rect = this.componentRef.getBoundingClientRect();
-
-            if (rect.height > window.innerHeight || rect.width > window.innerWidth) {
-                this.setState({
-                    height: this.state.height - 5,
-                    width: this.state.width - 5
-                });
-            }
-            else if (rect.height < window.innerHeight - 5 && rect.width < window.innerWidth - 5) {
-                this.setState({
-                    height: this.state.height + 5,
-                    width: this.state.width + 5
-                });
-            }
-            else {
-                //this.raf = null;
-                //return;
+            var rect = this.componentRef.getBoundingClientRect(),
+                maxWidth = this.getMaxWidth(this.componentRef);
+            if (rect) {
+                if (rect.height > window.innerHeight || maxWidth > window.innerWidth) {
+                    this.setState({
+                        height: this.state.height - 5,
+                        width: this.state.width - 5
+                    });
+                    this.noChangeCount = 0;
+                }
+                else if (rect.height < window.innerHeight - 5 && maxWidth < window.innerWidth - 5) {
+                    this.setState({
+                        height: this.state.height + 5,
+                        width: this.state.width + 5
+                    });
+                    this.noChangeCount = 0;
+                }
+                else {
+                    this.noChangeCount = this.noChangeCount + 1;
+                    if(this.noChangeCount > 10) {
+                        this.raf = null;
+                        return;
+                    }
+                }
             }
         }
         this.raf = window.requestAnimationFrame(this.animate);
@@ -59,10 +82,10 @@ export class Beer extends React.Component<any, any> {
     private componentRef: HTMLDivElement | null;
     public render() {
         const css = {
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-around",
-                alignItems: "center",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-around",
+            alignItems: "center",
             flexWrap: "nowrap"
         } as React.CSSProperties;
 
@@ -84,7 +107,10 @@ export class Beer extends React.Component<any, any> {
 
 
     public startAnimation() {
-        this.raf = window.requestAnimationFrame(this.animate);
+        if(!this.raf) {
+            this.noChangeCount = 0;
+            this.raf = window.requestAnimationFrame(this.animate);
+        }
     }
 
     public initialiseWindowDimensions() {
